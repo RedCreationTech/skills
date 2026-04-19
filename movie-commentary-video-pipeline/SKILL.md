@@ -172,19 +172,20 @@ Each beat record should usually contain:
 
 Generate narration that is:
 
-- shorter than the raw subtitle transcript
-- understandable without repeating every dialogue line
-- paced for speech, not for reading
+- **dense and continuous**: the narration must fill the audio timeline of each clip window with minimal dead air; if a 60-second clip has only 30 seconds of narration, the script is insufficient
+- **analysis-driven, not quotation-driven**: explain what the dialogue means, why the character says it, and what it reveals about theme or motivation
+- **fast-paced**: short punchy sentences, rapid-fire opinions, minimal poetic pauses
 - faithful to confirmed story events
 - careful about uncertain visuals
 
-Narration rules:
+Narration rules (hard constraints):
 
+- **Never quote or recite dialogue.** Do not use "他说..." / "她回答..." / "字幕里..." patterns. The audience can read subtitles themselves; the narrator's job is to interpret, not to read aloud.
+- **Never translate dialogue lines.** Do not convert English dialogue into Chinese narration verbatim. The commentary should be a layer of analysis on top of the dialogue, not a dubbing track.
 - Prefer recap language over screenplay transcription.
-- Compress repetitive back-and-forth dialogue into one sentence.
+- Compress repetitive back-and-forth dialogue into one sentence of analysis.
 - Avoid naming a visual detail unless it is visible or strongly implied by the subtitles/context.
 - Split long paragraphs into sentence-level chunks suitable for TTS.
-- Bake breathing room into the prose with punctuation and sentence boundaries.
 - For Chinese narration, prefer short, spoken sentences over written-style long clauses.
 - Keep every narration chunk attached to a timing budget.
 
