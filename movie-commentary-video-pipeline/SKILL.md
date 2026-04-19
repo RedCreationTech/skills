@@ -16,6 +16,7 @@ This skill is optimized for movie recap, plot explanation, spoiler review, and s
 
 # Operating principles
 
+- **Subtitles are mandatory.** The source video must have retrievable subtitles (internal tracks or external files). The commentary script must be grounded in subtitle content and must not deviate significantly from the dialogue and confirmed story events. If no subtitles are found, halt and ask the user to provide or locate them before proceeding.
 - Treat subtitle-only understanding as incomplete. Subtitles are strong for dialogue, scene order, and timing, but they do not fully describe silent actions, props, visual gags, expressions, or cinematography. If the task requires visual certainty and video frames are available, inspect keyframes or add frame-level analysis before stating visual details as facts.
 - Prefer a hybrid timing strategy. Start from subtitle timestamps, then refine around shot boundaries or visible transitions when possible.
 - Prefer permissive local TTS stacks by default. Use CosyVoice when GPU + naturalness are the priority, OpenVoice V2 when the user has a licensed voice reference and wants stronger voice identity, and MeloTTS as the CPU-friendly fallback. For this user's private environment, prefer Doubao SeedTTS 2.0 when the user asks for Doubao or when local CosyVoice output leaks prompt/reference audio.
@@ -49,7 +50,7 @@ Do not use this skill for:
 Common inputs:
 
 - video: `.mp4`, `.mkv`, `.mov`
-- subtitles: `.srt`, `.ass`, `.ssa`, `.vtt`
+- subtitles: `.srt`, `.ass`, `.ssa`, `.vtt` (mandatory; must be present or extractable)
 - optional voice reference audio
 - optional project config or style notes
 - target platform: horizontal, vertical, Shorts, Reels, Bilibili, YouTube
@@ -321,8 +322,12 @@ After synthesis, create a clean narration track:
 - trim leading/trailing silence
 - normalize loudness consistently
 - optionally add gentle fades between chunks
-- optionally add background music at a low bed level if licensed and requested
-- duck original movie audio under the narration instead of fully muting it unless the user wants a pure voiceover cut
+- **background music is required.** Select the BGM from the skill's own licensed asset library (`assets/bgm/`). Match the track to the film's tone:
+  - `Before_the_Curtain_Falls.mp3` — gentle, warm, suitable for romance, slice-of-life, and healing themes.
+  - `The_Last_Pendulum.mp3` — suspenseful, tense, suitable for thrillers, mysteries, and plot-twist narratives.
+  - `Ascent_to_the_Ridge.mp3` — uplifting, epic, suitable for inspirational, heroic, or grand-scale stories.
+- mix the BGM at a low bed level (e.g., 0.06–0.10) so it supports but never competes with narration.
+- duck original movie audio under the narration instead of fully muting it unless the user wants a pure voiceover cut.
 
 Favor subtle processing. The goal is intelligibility, not radio-style heavy compression.
 
