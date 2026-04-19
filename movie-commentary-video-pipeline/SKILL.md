@@ -189,6 +189,13 @@ Narration rules (hard constraints):
 - For Chinese narration, prefer short, spoken sentences over written-style long clauses.
 - Keep every narration chunk attached to a timing budget.
 
+Clip selection rules (hard constraints):
+
+- **Event-driven, not uniform sampling.** Each clip must cover one key story event (e.g., "father kills brother", "meeting the synthetic", "final battle"). Do not uniformly sample the film at fixed intervals, because that skips critical plot moments and causes commentary to drift out of sync with visuals.
+- **Narration duration must match clip duration.** The total spoken duration of all chunks in a clip (after atempo/speed adjustment) must roughly equal the clip's visual duration. If narration is too short, it will finish before the clip ends and jump ahead to the next clip's content, creating a jarring disconnect.
+- **No video resolution downscaling during clip extraction.** Preserve the source video's original resolution so that the final output retains full quality. Detect the assembled video's resolution at runtime and generate subtitle overlays to match exactly.
+- **Subtitles must appear at the bottom center of the screen.** Render commentary captions in the lower portion of the frame (e.g., within ~2–5% of the bottom edge), centered horizontally. Never place them in the upper-left or other corners.
+
 Produce both:
 
 1. a human-readable `commentary_script.md`
