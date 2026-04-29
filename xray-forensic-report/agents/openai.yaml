@@ -1,0 +1,4 @@
+interface:
+  display_name: "XRay Forensic Report"
+  short_description: "Generate an XRay HTML report plus four forensic markdown reports"
+  default_prompt: "Use $xray-forensic-report to generate an offline HTML report and four forensic markdown reports for a local repository."
