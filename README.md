@@ -15,11 +15,46 @@ npx skills@latest add redcreation/skills --skill movie-commentary-video-pipeline
 
 # Git repository forensic report generator
 npx skills@latest add redcreation/skills --skill xray-forensic-report
+
+# Frontend-to-fullstack transformation pipeline
+npx skills@latest add redcreation/skills --skill frontend-to-fullstack
 ```
 
 ---
 
 ## Skills
+
+### frontend-to-fullstack
+
+**What it does**
+
+An orchestrator skill that transforms a pure frontend project (React, Vue, or plain HTML/JS) into a production-grade full-stack product through a standardized 6-phase pipeline.
+
+**Pipeline phases**
+
+| Phase | What happens |
+|-------|-------------|
+| Pre-Flight | Detect project type, handle lightweight Node.js backends, extract embedded data from frontend code |
+| C4 Architecture | Analyze business domains, data entities, and API surface using `c4-architecture-c4-architecture` skill |
+| Restructuring | Split frontend/backend directories, set up Clojure backend skeleton, add file upload infrastructure |
+| Backend APIs | Implement database, migrations, seed data, and REST APIs per business domain using `clojure-fullstack-development` skill |
+| Integration | Browser validation, API documentation, quality gates |
+| E2E Testing | Playwright test suite covering all pages and API endpoints |
+
+**Use this skill when you want to**
+
+- Turn a pure frontend prototype into a production-ready full-stack product
+- Migrate a lightweight Node.js backend to a proper Clojure backend
+- Extract hardcoded mock data from JS/TS files into SQL database migrations
+- Add comprehensive Playwright E2E tests to an existing frontend project
+- Establish AGENTS.md conventions and architecture documentation for a codebase
+
+**Delegated skills**
+
+- `c4-architecture-c4-architecture` — architecture analysis and diagram generation
+- `clojure-fullstack-development` — backend API implementation (Kit framework, Integrant, SQLite)
+
+---
 
 ### bilibili-uploader
 
