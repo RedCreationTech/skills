@@ -1,6 +1,6 @@
 ---
 name: frontend-to-fullstack
-description: Transform a pure frontend project into a production-ready full-stack product. This skill orchestrates the end-to-end pipeline: C4 architecture analysis → project restructuring → backend API implementation → E2E testing. Use when the user wants to turn a frontend-only codebase (React, Vue, or plain HTML/JS) into a complete product with backend, database, APIs, tests, and documentation.
+description: "Transform a pure frontend project into a production-ready full-stack product. This skill orchestrates the end-to-end pipeline: C4 architecture analysis → project restructuring → backend API implementation → E2E testing. Use when the user wants to turn a frontend-only codebase (React, Vue, or plain HTML/JS) into a complete product with backend, database, APIs, tests, and documentation."
 ---
 
 # Frontend-to-Fullstack Skill
