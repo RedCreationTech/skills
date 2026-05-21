@@ -137,11 +137,19 @@ If the frontend references local image files or hardcoded URLs:
 
 2. **Split directories**: Ensure frontend code lives in `frontend/`, create empty `backend/`
 
-3. **Set up backend skeleton**: Create Clojure backend with `deps.edn`, Integrant config, basic handler, AND file upload infrastructure
+3. **Set up backend skeleton**: Create Clojure backend with `deps.edn`, Integrant config, basic handler, static resource serving, AND file upload infrastructure. The Ring handler MUST serve both API routes and static assets from `resources/public/` so the frontend is accessible after the backend JAR starts.
 
-4. **Create AGENTS.md**: Write project-level AGENTS.md with conventions, commands, and rules
+4. **Create `scripts/` directory**: Add local startup and packaging scripts to the project root.
+   - `scripts/start-dev.sh` (or `.bat`/`.ps1` equivalents) — starts both backend (`cd backend && clojure -M:run`) and frontend (`cd frontend && npm run dev`) concurrently, with clear console output
+   - `scripts/build.sh` (or `.bat`/`.ps1` equivalents) — **build order matters**:
+     1. Build the frontend for production (`cd frontend && npm run build`)
+     2. Copy the frontend build output (e.g., `frontend/dist/` or `frontend/build/`) into `backend/resources/public/`
+     3. Build the Clojure backend UberJAR (`cd backend && clojure -T:build uberjar`)
+   - Both scripts should be executable (`chmod +x`) and documented in README.md
 
-5. **Create README.md**: Brief project overview with setup instructions
+5. **Create AGENTS.md**: Write project-level AGENTS.md with conventions, commands, and rules
+
+6. **Create README.md**: Brief project overview with setup instructions
 
 ### Backend Skeleton Pattern (with File Upload Support)
 
@@ -152,11 +160,12 @@ backend/
   resources/
     system.edn          # Integrant system config
     config.edn          # Aero config with profiles
+    public/             # Frontend build output copied here before JAR packaging
     migrations/         # SQL migration files (Phase 3)
     sql/                # HugSQL query files (Phase 3)
   src/<project>/backend/
     core.clj            # System init + main
-    handler.clj         # Ring handler (with multipart support)
+    handler.clj         # Ring handler (with multipart support + static resource fallback)
     routes.clj          # Reitit route tree
     upload.clj          # File upload/download handler
   test/<project>/backend/
@@ -175,17 +184,22 @@ uploads/                # Created at runtime next to JAR, gitignored
 **Implementation requirements:**
 - `POST /api/upload` — accept multipart file upload, save to `uploads/` directory
 - `GET /uploads/:filename` — serve uploaded files as static resources
+- `GET /` (and all non-API paths) — serve the SPA / frontend from `resources/public/` (packaged into the JAR). The Ring handler must fall back to `index.html` for client-side routing (SPA catch-all)
 - `uploads/` directory is at the same level as the JAR (not inside it)
 - `uploads/` must be in `.gitignore`
+- `backend/resources/public/` must be in `.gitignore` (it is a build artifact copied from the frontend build output)
 - Image files from the original frontend should be seeded into `uploads/` at startup
-- Backend serves `uploads/` as a Ring static resource route
+- Backend serves `uploads/` as a Ring static resource route AND serves `resources/public/` as classpath/static resources
 
 ### Output
 - Clean `frontend/` and `backend/` directory structure (Node.js backend removed if present)
+- `scripts/` with local startup (`start-dev`) and packaging (`build`) scripts
+- `backend/resources/public/` serves as the destination for frontend build artifacts
 - `AGENTS.md` with project conventions
 - `README.md` with setup and run instructions
 - Backend starts and serves `/api/health`
 - File upload/download endpoints operational
+- Backend serves the frontend SPA from `resources/public/` when running as a JAR
 
 ### Validation
 - [ ] `cd backend && clojure -M:run` starts successfully
@@ -193,6 +207,9 @@ uploads/                # Created at runtime next to JAR, gitignored
 - [ ] `POST /api/upload` accepts and stores files
 - [ ] `GET /uploads/:filename` serves uploaded files
 - [ ] `cd frontend && npm run dev` starts successfully
+- [ ] `scripts/start-dev.sh` starts both frontend and backend concurrently
+- [ ] `scripts/build.sh` builds frontend, copies output to `backend/resources/public/`, and produces the backend UberJAR
+- [ ] Running the produced UberJAR (`java -jar backend/target/...jar`) serves both API endpoints and the frontend SPA (verify by opening `http://localhost:3000/` in browser)
 - [ ] AGENTS.md covers frontend and backend conventions
 
 ---
