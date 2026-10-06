@@ -14,6 +14,20 @@ Use this skill when the user wants the full forensic bundle, not just the HTML d
 This skill runs a bundled standalone `xray` CLI under `tools/xray` and then fills markdown templates from the generated `data.json`.
 It does not depend on the original `bbtools` repository layout.
 
+## Complexity coverage
+
+Function-level complexity is supported for:
+
+- Clojure: `.clj`, `.cljs`, `.cljc` via the bundled `rewrite-clj` analyzer
+- JavaScript: `.js`, `.jsx`, including React JSX
+- TypeScript: `.ts`, `.tsx`, including React TSX
+- Vue single-file components: `.vue`
+- Java: `.java`
+- C#: `.cs`
+
+The JS/TS/Vue/Java/C# backend uses the pinned Python `lizard` dependency and emits
+function-level CCN plus NLOC, token count, parameter count, and source line ranges.
+
 ## Required input
 
 - `repo`: absolute path to a local Git repository
@@ -53,6 +67,7 @@ python3 scripts/run_forensic_pipeline.py /ABS/PATH/TO/REPO
 ## Notes
 
 - The wrapper requires `bb` in `PATH`.
+- For repositories containing JS/TS/Vue/Java/C#, install the pinned complexity dependency with `python3 -m pip install -r xray-forensic-report/requirements.txt`.
 - By default the wrapper uses the bundled `tools/xray`.
 - If the user explicitly provides `xray-tool-root` or `XRAY_TOOL_ROOT`, that location overrides the bundled tool. Both an `xray` directory and its parent repo root are accepted.
 - By default it writes into `<repo>/target/xray-forensic-report-<timestamp>/`.
