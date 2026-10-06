@@ -154,7 +154,7 @@
                       (str "Multi-language complexity analysis failed. "
                            (str/trim (or stderr ""))
                            " Install the pinned Python dependency with: "
-                           "python3 -m pip install -r xray-forensic-report/requirements.txt")
+                           "python3 -m pip install lizard==1.24.1")
                       {:exit exit :stderr stderr})))
             (let [payload (json/parse-string stdout true)
                   errors (or (:errors payload) [])]
