@@ -68,6 +68,7 @@ python3 scripts/run_forensic_pipeline.py /ABS/PATH/TO/REPO
 
 - The wrapper requires `bb` in `PATH`.
 - For repositories containing JS/TS/Vue/Java/C#, install the pinned complexity dependency with `python3 -m pip install -r xray-forensic-report/requirements.txt`.
+- Smoke-test all supported non-Clojure language adapters with `python3 xray-forensic-report/tests/test_complexity_lizard.py`.
 - By default the wrapper uses the bundled `tools/xray`.
 - If the user explicitly provides `xray-tool-root` or `XRAY_TOOL_ROOT`, that location overrides the bundled tool. Both an `xray` directory and its parent repo root are accepted.
 - By default it writes into `<repo>/target/xray-forensic-report-<timestamp>/`.
