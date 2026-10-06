@@ -109,7 +109,7 @@
         until-day (or until (->> commits (keep :date_day) sort last) "")
         staleness (metrics/staleness hotspots until-day)
         knowledge-loss (metrics/knowledge-loss hotspots ownership-long until-day)
-        ;; Compute complexity only for likely relevant Clojure files (top hotspots).
+        ;; Compute function-level complexity for supported source files among top hotspots.
         top-hotspot-paths (->> hotspots (take 200) (map :path) vec)
         complexity-functions (complexity/complexity-functions repo top-hotspot-paths)
         coupling-res (coupling/temporal-coupling commits hotspots cfg)
