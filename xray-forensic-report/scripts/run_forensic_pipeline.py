@@ -12,6 +12,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_ROOT = SCRIPT_DIR.parent
 BUNDLED_XRAY_ROOT = SKILL_ROOT / "tools" / "xray"
 
+REQUIREMENTS_PATH = SKILL_ROOT / "requirements.txt"
+MULTILANG_COMPLEXITY_SUFFIXES = {".js", ".jsx", ".ts", ".tsx", ".vue", ".java", ".cs"}
+
 
 def fail(message: str) -> None:
     print(f"[ERROR] {message}", file=sys.stderr)
@@ -69,6 +72,39 @@ def ensure_git_repo(repo: Path) -> None:
     )
     if result.returncode != 0 or result.stdout.strip() != "true":
         fail(f"Not a Git repository: {repo}")
+
+
+def repo_has_multilang_complexity_files(repo: Path, path_filter: str | None) -> bool:
+    command = ["git", "-C", str(repo), "ls-files"]
+    if path_filter:
+        command.extend(["--", path_filter])
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        fail(f"Unable to list tracked files for complexity preflight: {repo}")
+    return any(
+        Path(line.strip()).suffix.lower() in MULTILANG_COMPLEXITY_SUFFIXES
+        for line in result.stdout.splitlines()
+        if line.strip()
+    )
+
+
+def ensure_lizard_available(repo: Path, path_filter: str | None) -> None:
+    if not repo_has_multilang_complexity_files(repo, path_filter):
+        return
+
+    result = subprocess.run(
+        [sys.executable, "-c", "import lizard"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        return
+
+    fail(
+        "JS/TS/Vue/Java/C# complexity analysis requires the pinned Python "
+        f"dependency. Install it with: {sys.executable} -m pip install -r "
+        f"{REQUIREMENTS_PATH}"
+    )
 
 
 def parse_bool(value: str) -> str:
@@ -190,6 +226,7 @@ def main() -> None:
 
     repo = require_absolute_dir(args.repo, "repo")
     ensure_git_repo(repo)
+    ensure_lizard_available(repo, args.path)
     tool_root = find_tool_root(args.xray_tool_root)
     out_dir = resolve_output_path(repo, args.out)
     reports_dir = out_dir / "reports"
