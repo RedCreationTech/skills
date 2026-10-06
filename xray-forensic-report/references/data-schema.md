@@ -16,6 +16,7 @@ Primary fields consumed:
 - `ownership_long[]`
 - `staleness[]`
 - `knowledge_loss[]`
+- `complexity_functions[]`
 - `raw.commits[]`
 - `raw.authors[]`
 
@@ -24,3 +25,22 @@ Optional behavior:
 - If `raw` is missing, author and commit-level sections degrade gracefully.
 - If `knowledge_loss` is empty, the corresponding report section falls back to a note.
 - If `complexity` is sparse, risk tables still render from the available data.
+
+
+## complexity_functions[]
+
+Function-level rows preserve the original XRay fields and may include richer metrics:
+
+- `path`: repo-relative source path
+- `fn`: function or method name
+- `long_name`: backend-provided signature/display name when available
+- `cc`: cyclomatic complexity / CCN
+- `nloc`: non-comment source lines when available
+- `tokens`: function token count when available
+- `params`: parameter count when available
+- `start_line`, `end_line`: source range when available
+- `lang`: `clojure`, `javascript`, `typescript`, `vue`, `java`, or `csharp`
+- `analyzer`: analyzer backend, currently `rewrite-clj` or `lizard`
+
+React code is analyzed through JavaScript/JSX or TypeScript/TSX. Vue single-file
+components are analyzed through the VueJS parser in Lizard.
