@@ -243,7 +243,9 @@ def main() -> None:
     if args.since or args.until:
         print(f"[INFO] date_window={args.since or 'BEGIN'}..{args.until or 'END'}")
 
-    subprocess.run(xray_command, check=True)
+    xray_env = os.environ.copy()
+    xray_env["XRAY_TOOL_ROOT"] = str(tool_root)
+    subprocess.run(xray_command, check=True, env=xray_env)
 
     data_path = out_dir / "data.json"
     if not data_path.is_file():
