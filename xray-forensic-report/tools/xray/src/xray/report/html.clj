@@ -506,6 +506,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
     var cognitiveMap = Object.create(null);\n
     var cognitiveMaxMap = Object.create(null);\n
     var cognitiveOverMap = Object.create(null);\n
+    var cognitiveExcessMap = Object.create(null);\n
     for (var jc = 0; jc < complexityFunctions.length; jc++) {\n
       var cf = complexityFunctions[jc];\n
       if (!cf || !cf.path) continue;\n
@@ -513,7 +514,10 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
       var cog = Number(cf.cognitive_complexity || 0);\n
       cognitiveMap[cp] = (cognitiveMap[cp] || 0) + cog;\n
       cognitiveMaxMap[cp] = Math.max(Number(cognitiveMaxMap[cp] || 0), cog);\n
-      if (cog > cognitiveThreshold) cognitiveOverMap[cp] = Number(cognitiveOverMap[cp] || 0) + 1;\n
+      if (cog > cognitiveThreshold) {\n
+        cognitiveOverMap[cp] = Number(cognitiveOverMap[cp] || 0) + 1;\n
+        cognitiveExcessMap[cp] = Number(cognitiveExcessMap[cp] || 0) + (cog - cognitiveThreshold);\n
+      }\n
     }\n
 \n
     var top1Map = Object.create(null);\n
@@ -555,7 +559,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
       var cm = churnMap[pth] || {change_count: 0, churn_lines: 0};\n
       churnRaw.push((2.0 * cm.change_count) + (0.001 * cm.churn_lines));\n
       ccRaw.push(Number(ccMap[pth] || 0));\n
-      cognitiveRaw.push(Number(cognitiveMap[pth] || 0));\n
+      cognitiveRaw.push(Number(cognitiveMaxMap[pth] || 0) + Number(cognitiveExcessMap[pth] || 0));\n
       var top1 = (top1Map[pth] == null) ? 1.0 : Number(top1Map[pth]);\n
       ownRaw.push(1.0 - top1);\n
     }\n
@@ -588,6 +592,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
         cognitive_sum: Number(cognitiveMap[pth2] || 0),\n
         cognitive_max: Number(cognitiveMaxMap[pth2] || 0),\n
         cognitive_over_threshold: Number(cognitiveOverMap[pth2] || 0),\n
+        cognitive_pressure: Number(cognitiveMaxMap[pth2] || 0) + Number(cognitiveExcessMap[pth2] || 0),\n
         top1_pct: top1b\n
       });\n
     }\n
@@ -635,7 +640,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
 	      last_seen: '最后见到',\n
 	      fn: '函数',\n
       cc: '圈复杂度',\n      cognitive_complexity: '认知复杂度',\n
-      cc_sum: '圈复杂度总和',\n      cognitive_sum: '认知复杂度总和',\n      cognitive_max: '最高函数认知复杂度',\n      cognitive_over_threshold: 'CogC超阈值函数数',\n      complexity_score: '综合复杂度分数',\n
+      cc_sum: '圈复杂度总和',\n      cognitive_sum: '认知复杂度总和',\n      cognitive_max: '最高函数认知复杂度',\n      cognitive_over_threshold: 'CogC超阈值函数数',\n      cognitive_pressure: '认知复杂度压力',\n      complexity_score: '综合复杂度分数',\n
       risk_score: '风险分数',\n
       top1_pct: '第一贡献者占比',\n
       churn_pct: '贡献占比',\n
@@ -665,7 +670,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
 	      last_seen: 'Last seen',\n
 	      fn: 'Function',\n
       cc: 'Cyclomatic complexity',\n      cognitive_complexity: 'Cognitive complexity',\n
-      cc_sum: 'Cyclomatic complexity sum',\n      cognitive_sum: 'Cognitive complexity sum',\n      cognitive_max: 'Max function cognitive complexity',\n      cognitive_over_threshold: 'Functions over CogC threshold',\n      complexity_score: 'Blended complexity score',\n
+      cc_sum: 'Cyclomatic complexity sum',\n      cognitive_sum: 'Cognitive complexity sum',\n      cognitive_max: 'Max function cognitive complexity',\n      cognitive_over_threshold: 'Functions over CogC threshold',\n      cognitive_pressure: 'Cognitive pressure',\n      complexity_score: 'Blended complexity score',\n
       risk_score: 'Risk score',\n
       top1_pct: 'Top1 owner pct',\n
       churn_pct: 'Ownership pct',\n
