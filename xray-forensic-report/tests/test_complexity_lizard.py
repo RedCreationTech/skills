@@ -116,6 +116,14 @@ class ComplexityLizardSmokeTest(unittest.TestCase):
                     all(int(row["cc"]) >= 1 for row in by_path[path]),
                     f"invalid CCN for {path}: {by_path[path]}",
                 )
+                self.assertTrue(
+                    all("cognitive_complexity" in row for row in by_path[path]),
+                    f"missing CogC for {path}: {by_path[path]}",
+                )
+                self.assertTrue(
+                    any(int(row["cognitive_complexity"]) >= 1 for row in by_path[path]),
+                    f"invalid CogC for {path}: {by_path[path]}",
+                )
 
 
 if __name__ == "__main__":
