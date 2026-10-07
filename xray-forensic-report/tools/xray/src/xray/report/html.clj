@@ -634,8 +634,8 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
 	      last_touched_at: '最后修改',\n
 	      last_seen: '最后见到',\n
 	      fn: '函数',\n
-      cc: '圈复杂度',\n
-      cc_sum: '复杂度总和',\n
+      cc: '圈复杂度',\n      cognitive_complexity: '认知复杂度',\n
+      cc_sum: '圈复杂度总和',\n      cognitive_sum: '认知复杂度总和',\n      cognitive_max: '最高函数认知复杂度',\n      cognitive_over_threshold: 'CogC超阈值函数数',\n      complexity_score: '综合复杂度分数',\n
       risk_score: '风险分数',\n
       top1_pct: '第一贡献者占比',\n
       churn_pct: '贡献占比',\n
@@ -664,8 +664,8 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
 	      last_touched_at: 'Last touched',\n
 	      last_seen: 'Last seen',\n
 	      fn: 'Function',\n
-      cc: 'Cyclomatic complexity',\n
-      cc_sum: 'Complexity sum',\n
+      cc: 'Cyclomatic complexity',\n      cognitive_complexity: 'Cognitive complexity',\n
+      cc_sum: 'Cyclomatic complexity sum',\n      cognitive_sum: 'Cognitive complexity sum',\n      cognitive_max: 'Max function cognitive complexity',\n      cognitive_over_threshold: 'Functions over CogC threshold',\n      complexity_score: 'Blended complexity score',\n
       risk_score: 'Risk score',\n
       top1_pct: 'Top1 owner pct',\n
       churn_pct: 'Ownership pct',\n
@@ -1447,10 +1447,12 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
                       :dir-change-count "目录变更次数"
                       :change-count "变更次数"
                       :cc "圈复杂度"
+                      :cognitive "认知复杂度"
                       :functions "函数数"
                       :author "作者"
-                      :cc-dist "复杂度分布(Clojure)"
-                      :top-fns "复杂函数(选中文件)"
+                      :cc-dist "圈复杂度分布"
+                      :cognitive-dist "认知复杂度分布"
+                      :top-fns "高认知复杂度函数(选中文件)"
                       :risk "风险热点(散点)"
                       :churn-commits "变更趋势(提交/天)"
                       :churn-lines "变更趋势(新增行/天)"
@@ -1467,7 +1469,8 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
                       :coupling-matrix "时间耦合(TopK 热点)"
                       :cochange "共变次数"
                       :ownership-pct "贡献占比"
-                      :complexity-sum "复杂度(文件 CC 总和)"
+                      :complexity-sum "综合复杂度分数"
+                      :cognitive-sum "文件 CogC 总和"
                       :churn-change-count "变更次数"
                       :churn-lines-axis "变更行数"
                       :top1-owner "第一贡献者占比"}
@@ -1477,10 +1480,12 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
                       :dir-change-count "Dir change count"
                       :change-count "Change count"
                       :cc "Cyclomatic complexity"
+                      :cognitive "Cognitive complexity"
                       :functions "Functions"
                       :author "Author"
-                      :cc-dist "Complexity Distribution (Clojure)"
-                      :top-fns "Top Functions (selected file)"
+                      :cc-dist "Cyclomatic Complexity Distribution"
+                      :cognitive-dist "Cognitive Complexity Distribution"
+                      :top-fns "Top Cognitive Functions (selected file)"
                       :risk "Risk Hotspots (scatter)"
                       :churn-commits "Churn (commits/day)"
                       :churn-lines "Lines added/day"
@@ -1497,7 +1502,8 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
                       :coupling-matrix "Temporal Coupling (TopK hotspots)"
                       :cochange "Co-change count"
                       :ownership-pct "Ownership"
-                      :complexity-sum "Complexity (sum cc/file)"
+                      :complexity-sum "Blended complexity score"
+                      :cognitive-sum "Cognitive complexity sum/file"
                       :churn-change-count "Churn (change count)"
                       :churn-lines-axis "Churn lines"
                       :top1-owner "Top1 owner pct"}
@@ -1634,23 +1640,37 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
                          :encoding {:x {:field "cc" :type "quantitative" :bin {:maxbins 20} :title (t :cc)}
                                     :y {:aggregate "count" :type "quantitative" :title (t :functions)}}})
                  (add-param zoom-x))}
+      {:id "cognitive_hist"
+       :title (t :cognitive-dist)
+       :spec (-> (merge base
+                        {:data {:name "complexity_functions"}
+                         :width 520
+                         :height 240
+                         :transform [{:filter "datum.cognitive_complexity != null"}]
+                         :mark {:type "bar"}
+                         :encoding {:x {:field "cognitive_complexity" :type "quantitative" :bin {:maxbins 20} :title (t :cognitive)}
+                                    :y {:aggregate "count" :type "quantitative" :title (t :functions)}}})
+                 (add-param zoom-x))}
       {:id "complexity_top"
        :title (t :top-fns)
        :spec (merge base
                     {:data {:name "complexity_functions"}
                      :width 520
                      :height {:step 16}
-                     :transform [{:filter "datum.cc != null"}
+                     :transform [{:filter "datum.cognitive_complexity != null"}
                                  {:filter "selectedPath === '' || datum.path === selectedPath"}
                                  {:window [{:op "rank" :as "r"}]
-                                  :sort [{:field "cc" :order "descending"}]}
+                                  :sort [{:field "cognitive_complexity" :order "descending"}]}
                                  {:filter "datum.r <= 20"}]
                      :mark {:type "bar"}
                      :encoding {:y {:field "fn" :type "nominal" :sort "-x" :title nil}
-                                :x {:field "cc" :type "quantitative" :title (t :cc)}
+                                :x {:field "cognitive_complexity" :type "quantitative" :title (t :cognitive)}
                                 :tooltip [{:field "path" :type "nominal"}
                                           {:field "fn" :type "nominal"}
-                                          {:field "cc" :type "quantitative"}]}})}
+                                          {:field "lang" :type "nominal"}
+                                          {:field "cc" :type "quantitative" :title (t :cc)}
+                                          {:field "cognitive_complexity" :type "quantitative" :title (t :cognitive)}
+                                          {:field "nloc" :type "quantitative"}]}})}
       {:id "risk_scatter"
        :title (t :risk)
        :spec (-> (merge base
@@ -1658,7 +1678,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
                          :width 520
                          :height 260
                          :mark {:type "point" :filled true}
-                         :encoding {:x {:field "cc_sum" :type "quantitative" :title (t :complexity-sum)}
+                         :encoding {:x {:field "cognitive_sum" :type "quantitative" :title (t :cognitive-sum)}
                                     :y {:field "change_count" :type "quantitative" :title (t :churn-change-count)}
                                     :size {:field "churn_lines" :type "quantitative" :title (t :churn-lines-axis)}
                                     :color {:field "top1_pct" :type "quantitative" :title (t :top1-owner)}
@@ -1667,7 +1687,10 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
                                               :value 0.25}
                                     :tooltip [{:field "path" :type "nominal"}
                                               {:field "risk_score" :type "quantitative" :format ".3f"}
-                                              {:field "cc_sum" :type "quantitative"}
+                                              {:field "complexity_score" :type "quantitative" :format ".3f" :title (t :complexity-sum)}
+                                              {:field "cc_sum" :type "quantitative" :title (t :cc)}
+                                              {:field "cognitive_sum" :type "quantitative" :title (t :cognitive-sum)}
+                                              {:field "cognitive_max" :type "quantitative"}
                                               {:field "change_count" :type "quantitative"}
                                               {:field "churn_lines" :type "quantitative"}
                                               {:field "top1_pct" :type "quantitative" :format ".2f"}]}})
