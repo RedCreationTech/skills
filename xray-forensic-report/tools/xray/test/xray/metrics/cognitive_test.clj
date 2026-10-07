@@ -47,6 +47,9 @@
   (is (= 1 (cognitive/complexity
             '(defn f [a b c] (and a b c))
             "f")))
+  (is (= 1 (cognitive/complexity
+            '(defn f [a b c] (and a (and b c)))
+            "f")))
   (is (= 2 (cognitive/complexity
             '(defn f [a b c] (and a (or b c)))
             "f"))))
