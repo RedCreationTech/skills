@@ -61,3 +61,59 @@ jobs:
                                'xray.metrics.complexity-integration-test)]
             (when (pos? (+ (:fail r) (:error r)))
               (System/exit 1)))"
+
+      - name: Run forensic pipeline end to end
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$(mktemp -d)"
+          git -C "$fixture" init
+          git -C "$fixture" config user.email "xray-ci@example.invalid"
+          git -C "$fixture" config user.name "XRay CI"
+          mkdir -p "$fixture/src"
+          cat > "$fixture/src/core.clj" <<'EOF'
+          (ns demo.core)
+          (defn decide [a b]
+            (when a
+              (when b
+                :ok)))
+          EOF
+          cat > "$fixture/src/App.tsx" <<'EOF'
+          type Props = { ok: boolean };
+          export function App(props: Props) {
+            if (props.ok) {
+              return <div>yes</div>;
+            }
+            return <span>no</span>;
+          }
+          EOF
+          git -C "$fixture" add .
+          git -C "$fixture" commit -m "initial fixture"
+
+          python xray-forensic-report/scripts/run_forensic_pipeline.py             "$fixture"             --out "$fixture/xray-out"             --include-raw true
+
+          FIXTURE="$fixture" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["FIXTURE"])
+          out = root / "xray-out"
+          data = json.loads((out / "data.json").read_text(encoding="utf-8"))
+
+          rows = data.get("complexity_functions", [])
+          assert any(r.get("lang") == "clojure" and r.get("cognitive_complexity", 0) > 0 for r in rows), rows
+          assert any(r.get("lang") == "typescript" and r.get("cognitive_complexity", 0) > 0 for r in rows), rows
+          assert data.get("risk"), data
+          assert any("cognitive_pressure" in r for r in data["risk"]), data["risk"]
+          assert (out / "index.html").is_file()
+          assert (out / "data.json").is_file()
+          assert (out / "meta.json").is_file()
+          for name in (
+              "report-forensic-analysis.md",
+              "report-management-summary.md",
+              "report-technical-plan.md",
+              "report-refactoring-guide.md",
+          ):
+              assert (out / "reports" / name).is_file(), name
+          PY
