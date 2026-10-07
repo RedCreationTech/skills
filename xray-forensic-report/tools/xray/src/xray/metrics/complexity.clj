@@ -110,12 +110,29 @@
           fs/parent
           fs/parent))
 
+(defn- tool-root-from-config []
+  (when-let [config (System/getProperty "babashka.config")]
+    (let [p (fs/path config)
+          parent (fs/parent p)]
+      (when (and parent (fs/regular-file? (fs/path parent "bb.edn")))
+        parent))))
+
 (defn- find-lizard-helper []
   (let [source-root (tool-root-from-source)
+        config-root (tool-root-from-config)
+        env-root (some-> (System/getenv "XRAY_TOOL_ROOT") fs/path)
         cwd (fs/cwd)
         candidates (remove nil?
-                           [(when source-root
+                           [(when env-root
+                              (fs/path env-root "scripts" "complexity_lizard.py"))
+                            (when config-root
+                              (fs/path config-root "scripts" "complexity_lizard.py"))
+                            (when source-root
                               (fs/path source-root "scripts" "complexity_lizard.py"))
+                            ;; Running tests from the skills repository root.
+                            (fs/path cwd "xray-forensic-report" "tools" "xray"
+                                     "scripts" "complexity_lizard.py")
+                            ;; Running from the XRay tool root or its parent.
                             (fs/path cwd "scripts" "complexity_lizard.py")
                             (fs/path cwd "tools" "xray" "scripts" "complexity_lizard.py")])]
     (some (fn [candidate]
