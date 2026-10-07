@@ -34,7 +34,10 @@ LANG_BY_SUFFIX = {
     ".cs": "csharp",
 }
 
-ANALYZER = lizard.FileAnalyzer([CognitiveExtension()])
+# Use Lizard's own extension assembly so the standard preprocessing, token,
+# line and condition counters remain active. Injecting CognitiveExtension alone
+# would drop the normal metric pipeline and produce incomplete/false results.
+ANALYZER = lizard.FileAnalyzer(lizard.get_extensions(["cognitive"]))
 
 
 def parse_args() -> argparse.Namespace:
