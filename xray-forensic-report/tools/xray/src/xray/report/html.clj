@@ -484,6 +484,10 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
     var wChurn = Number(cfg['w-churn'] || cfg.w_churn || cfg.wChurn || 0.45);\n
     var wCc = Number(cfg['w-cc'] || cfg.w_cc || cfg.wCc || 0.35);\n
     var wOwn = Number(cfg['w-ownership'] || cfg.w_ownership || cfg.wOwnership || 0.20);\n
+    var complexityCfg = (uiDefaults && uiDefaults.complexity) ? uiDefaults.complexity : {};\n
+    var wCyclomatic = Number(complexityCfg['w-cyclomatic'] || complexityCfg.w_cyclomatic || 0.40);\n
+    var wCognitive = Number(complexityCfg['w-cognitive'] || complexityCfg.w_cognitive || 0.60);\n
+    var cognitiveThreshold = Number(complexityCfg['cognitive-threshold'] || complexityCfg.cognitive_threshold || 15);\n
 \n
     var churnMap = Object.create(null);\n
     for (var i = 0; i < hotspots.length; i++) {\n
@@ -497,6 +501,19 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
       if (!f || !f.path) continue;\n
       var p = String(f.path);\n
       ccMap[p] = (ccMap[p] || 0) + Number(f.cc || 0);\n
+    }\n
+\n
+    var cognitiveMap = Object.create(null);\n
+    var cognitiveMaxMap = Object.create(null);\n
+    var cognitiveOverMap = Object.create(null);\n
+    for (var jc = 0; jc < complexityFunctions.length; jc++) {\n
+      var cf = complexityFunctions[jc];\n
+      if (!cf || !cf.path) continue;\n
+      var cp = String(cf.path);\n
+      var cog = Number(cf.cognitive_complexity || 0);\n
+      cognitiveMap[cp] = (cognitiveMap[cp] || 0) + cog;\n
+      cognitiveMaxMap[cp] = Math.max(Number(cognitiveMaxMap[cp] || 0), cog);\n
+      if (cog > cognitiveThreshold) cognitiveOverMap[cp] = Number(cognitiveOverMap[cp] || 0) + 1;\n
     }\n
 \n
     var top1Map = Object.create(null);\n
@@ -531,18 +548,25 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
 \n
     var churnRaw = [];\n
     var ccRaw = [];\n
+    var cognitiveRaw = [];\n
     var ownRaw = [];\n
     for (var pidx = 0; pidx < paths.length; pidx++) {\n
       var pth = paths[pidx];\n
       var cm = churnMap[pth] || {change_count: 0, churn_lines: 0};\n
       churnRaw.push((2.0 * cm.change_count) + (0.001 * cm.churn_lines));\n
       ccRaw.push(Number(ccMap[pth] || 0));\n
+      cognitiveRaw.push(Number(cognitiveMap[pth] || 0));\n
       var top1 = (top1Map[pth] == null) ? 1.0 : Number(top1Map[pth]);\n
       ownRaw.push(1.0 - top1);\n
     }\n
 \n
     var churnN = normalize01(churnRaw);\n
     var ccN = normalize01(ccRaw);\n
+    var cognitiveN = normalize01(cognitiveRaw);\n
+    var complexityN = [];\n
+    for (var cn = 0; cn < paths.length; cn++) {\n
+      complexityN.push((wCyclomatic * ccN[cn]) + (wCognitive * cognitiveN[cn]));\n
+    }\n
     var ownN = normalize01(ownRaw);\n
 \n
     var out = [];\n
@@ -554,11 +578,16 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI
         path: pth2,\n
         churn_score: churnN[ridx],\n
         cc_score: ccN[ridx],\n
+        cognitive_score: cognitiveN[ridx],\n
+        complexity_score: complexityN[ridx],\n
         ownership_score: ownN[ridx],\n
-        risk_score: (wChurn * churnN[ridx]) + (wCc * ccN[ridx]) + (wOwn * ownN[ridx]),\n
+        risk_score: (wChurn * churnN[ridx]) + (wCc * complexityN[ridx]) + (wOwn * ownN[ridx]),\n
         change_count: cm2.change_count,\n
         churn_lines: cm2.churn_lines,\n
         cc_sum: Number(ccMap[pth2] || 0),\n
+        cognitive_sum: Number(cognitiveMap[pth2] || 0),\n
+        cognitive_max: Number(cognitiveMaxMap[pth2] || 0),\n
+        cognitive_over_threshold: Number(cognitiveOverMap[pth2] || 0),\n
         top1_pct: top1b\n
       });\n
     }\n
