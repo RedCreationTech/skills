@@ -172,7 +172,17 @@
 
         (contains? logical-forms head)
         (+ (if (>= (count form) 3) 1 0)
-           (score-many (rest form) nesting fn-name))
+           ;; Clojure's and/or are variadic. Nested use of the same operator
+           ;; is still one logical sequence, while switching operator starts
+           ;; a new sequence.
+           (reduce
+            + 0
+            (map (fn [child]
+                   (if (and (seq? child)
+                            (= head (head-name child)))
+                     (score-many (rest child) nesting fn-name)
+                     (score* child nesting fn-name false)))
+                 (rest form))))
 
         :else
         (score-many form nesting fn-name)))
