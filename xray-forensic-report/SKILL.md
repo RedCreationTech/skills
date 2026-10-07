@@ -31,8 +31,12 @@ and source line ranges. Clojure/CLJS/CLJC use a Lisp-aware Cognitive Complexity
 implementation built on the existing `rewrite-clj` AST path.
 
 By default, XRay treats CogC > 15 as a function-level maintainability warning.
+For file-level Risk, Cognitive Complexity uses a threshold-aware pressure metric:
+`max CogC + sum(max(0, CogC - 15))`, rather than raw CogC sum. This avoids
+penalizing files simply because they contain many easy functions.
+
 The file-level complexity component used by Risk is 40% normalized CCN + 60%
-normalized CogC while retaining the existing top-level risk weights.
+normalized cognitive pressure while retaining the existing top-level risk weights.
 
 ## Required input
 
