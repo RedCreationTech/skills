@@ -6,6 +6,8 @@ on:
       - "xray-forensic-report/**"
       - ".github/workflows/xray-complexity.yml"
   push:
+    branches:
+      - main
     paths:
       - "xray-forensic-report/**"
       - ".github/workflows/xray-complexity.yml"
