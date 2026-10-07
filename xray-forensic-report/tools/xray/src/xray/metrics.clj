@@ -177,27 +177,50 @@
       (mapv (fn [x] (double (/ (- x mn) denom))) xs))))
 
 (defn risk
-  "Compute per-file risk score combining churn, complexity, and ownership dispersion.
-   Returns vector of:
-   {:path ... :churn_score ... :cc_score ... :ownership_score ... :risk_score ...}
-   Notes:
-   - churn_score is based on hotspots :change_count and :churn_lines.
-   - cc_score is based on sum cc per file from complexity-functions.
-   - ownership_score is (1 - top1_pct) from ownership_long."
+  "Compute per-file risk score combining churn, blended code complexity, and
+   ownership dispersion.
+
+   Complexity is a configurable blend of normalized Cyclomatic Complexity and
+   Cognitive Complexity. The historical :w-cc risk key is retained as the
+   top-level weight of that blended complexity component for compatibility."
   [hotspots complexity-functions ownership-long config]
   (let [{:keys [w-churn w-cc w-ownership]}
         (merge {:w-churn 0.45 :w-cc 0.35 :w-ownership 0.20}
                (get-in config [:metrics :risk] {}))
+        {:keys [w-cyclomatic w-cognitive cognitive-threshold]}
+        (merge {:w-cyclomatic 0.40
+                :w-cognitive 0.60
+                :cognitive-threshold 15}
+               (get-in config [:metrics :complexity] {}))
         churn-map (->> hotspots
                        (map (fn [{:keys [path change_count churn_lines]}]
                               [path {:change_count (long change_count)
                                      :churn_lines (long churn_lines)}]))
                        (into {}))
-        cc-map (->> complexity-functions
-                    (group-by :path)
+        complexity-by-path (group-by :path complexity-functions)
+        cc-map (->> complexity-by-path
                     (map (fn [[p rows]]
-                           [p (reduce + 0 (map :cc rows))]))
+                           [p (reduce + 0 (map #(long (or (:cc %) 0)) rows))]))
                     (into {}))
+        cognitive-map (->> complexity-by-path
+                           (map (fn [[p rows]]
+                                  [p (reduce + 0
+                                             (map #(long (or (:cognitive_complexity %) 0))
+                                                  rows))]))
+                           (into {}))
+        cognitive-max-map (->> complexity-by-path
+                               (map (fn [[p rows]]
+                                      [p (reduce max 0
+                                                 (map #(long (or (:cognitive_complexity %) 0))
+                                                      rows))]))
+                               (into {}))
+        cognitive-over-map (->> complexity-by-path
+                                (map (fn [[p rows]]
+                                       [p (count
+                                           (filter #(> (long (or (:cognitive_complexity %) 0))
+                                                       (long cognitive-threshold))
+                                                   rows))]))
+                                (into {}))
         top1-map (->> ownership-long
                       (group-by :path)
                       (map (fn [[p rows]]
@@ -210,21 +233,37 @@
                             (+ (* 2.0 change_count) (* 0.001 churn_lines))))
                         paths)
         cc-raw (mapv (fn [p] (double (get cc-map p 0))) paths)
-        owner-raw (mapv (fn [p] (double (- 1.0 (double (or (get top1-map p) 1.0))))) paths)
+        cognitive-raw (mapv (fn [p] (double (get cognitive-map p 0))) paths)
+        owner-raw (mapv (fn [p]
+                          (double (- 1.0
+                                     (double (or (get top1-map p) 1.0)))))
+                        paths)
         churn-n (normalize-01 churn-raw)
         cc-n (normalize-01 cc-raw)
+        cognitive-n (normalize-01 cognitive-raw)
+        complexity-n (mapv (fn [ccs cogs]
+                             (+ (* (double w-cyclomatic) ccs)
+                                (* (double w-cognitive) cogs)))
+                           cc-n cognitive-n)
         owner-n (normalize-01 owner-raw)]
-    (->> (mapv (fn [p cs ccs os]
+    (->> (mapv (fn [p cs ccs cogs comps os]
                  {:path p
                   :churn_score cs
                   :cc_score ccs
+                  :cognitive_score cogs
+                  :complexity_score comps
                   :ownership_score os
-                  :risk_score (+ (* w-churn cs) (* w-cc ccs) (* w-ownership os))
+                  :risk_score (+ (* w-churn cs)
+                                 (* w-cc comps)
+                                 (* w-ownership os))
                   :change_count (get-in churn-map [p :change_count])
                   :churn_lines (get-in churn-map [p :churn_lines])
                   :cc_sum (get cc-map p 0)
+                  :cognitive_sum (get cognitive-map p 0)
+                  :cognitive_max (get cognitive-max-map p 0)
+                  :cognitive_over_threshold (get cognitive-over-map p 0)
                   :top1_pct (or (get top1-map p) 1.0)})
-               paths churn-n cc-n owner-n)
+               paths churn-n cc-n cognitive-n complexity-n owner-n)
          (sort-by :risk_score >)
          vec)))
 
