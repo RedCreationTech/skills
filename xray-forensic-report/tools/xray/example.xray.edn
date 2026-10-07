@@ -35,6 +35,11 @@
  {:coupling {:min-cochange 3
              :topK 25
              :topN 100}
+  :complexity {:w-cyclomatic 0.40
+               :w-cognitive 0.60
+               :cognitive-threshold 15}
+  ;; Backward-compatible name: w-cc now weights the blended complexity
+  ;; component (Cyclomatic + Cognitive), not raw CCN alone.
   :risk {:w-churn 0.45
          :w-cc 0.35
          :w-ownership 0.20}}
