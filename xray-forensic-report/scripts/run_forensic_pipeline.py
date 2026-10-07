@@ -93,7 +93,11 @@ def ensure_lizard_available(repo: Path, path_filter: str | None) -> None:
         return
 
     result = subprocess.run(
-        [sys.executable, "-c", "import lizard"],
+        [
+            sys.executable,
+            "-c",
+            "import lizard; from lizard_ext.lizardcognitive import LizardExtension",
+        ],
         capture_output=True,
         text=True,
     )
@@ -101,7 +105,7 @@ def ensure_lizard_available(repo: Path, path_filter: str | None) -> None:
         return
 
     fail(
-        "JS/TS/Vue/Java/C# complexity analysis requires the pinned Python "
+        "JS/TS/Vue/Java/C# cyclomatic + cognitive complexity analysis requires the pinned Python "
         f"dependency. Install it with: {sys.executable} -m pip install -r "
         f"{REQUIREMENTS_PATH}"
     )
