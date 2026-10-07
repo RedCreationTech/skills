@@ -66,3 +66,10 @@ For Clojure/CLJS/CLJC, XRay uses a Lisp-aware AST implementation:
 
 Risk keeps the existing top-level weights. The complexity component defaults to
 40% normalized cyclomatic complexity and 60% normalized cognitive complexity.
+
+
+For file-level Risk, XRay does not use raw `cognitive_sum` directly. It derives
+`cognitive_pressure = cognitive_max + sum(max(0, function_cogc - threshold))`.
+This prevents a large file containing many simple functions from being penalized
+merely for its size, while still increasing pressure when several functions exceed
+the default CogC threshold of 15.
