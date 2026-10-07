@@ -26,7 +26,13 @@ Function-level complexity is supported for:
 - C#: `.cs`
 
 The JS/TS/Vue/Java/C# backend uses the pinned Python `lizard` dependency and emits
-function-level CCN plus NLOC, token count, parameter count, and source line ranges.
+function-level CCN, Cognitive Complexity (CogC), NLOC, token count, parameter count,
+and source line ranges. Clojure/CLJS/CLJC use a Lisp-aware Cognitive Complexity
+implementation built on the existing `rewrite-clj` AST path.
+
+By default, XRay treats CogC > 15 as a function-level maintainability warning.
+The file-level complexity component used by Risk is 40% normalized CCN + 60%
+normalized CogC while retaining the existing top-level risk weights.
 
 ## Required input
 
@@ -69,6 +75,7 @@ python3 scripts/run_forensic_pipeline.py /ABS/PATH/TO/REPO
 - The wrapper requires `bb` in `PATH`.
 - For repositories containing JS/TS/Vue/Java/C#, install the pinned complexity dependency with `python3 -m pip install -r xray-forensic-report/requirements.txt`.
 - Smoke-test all supported non-Clojure language adapters with `python3 xray-forensic-report/tests/test_complexity_lizard.py`.
+- Validate the Lisp-aware CogC rules with `cd xray-forensic-report/tools/xray && bb -cp src:test -e "(require 'xray.metrics.cognitive-test)(clojure.test/run-tests 'xray.metrics.cognitive-test)"`.
 - By default the wrapper uses the bundled `tools/xray`.
 - If the user explicitly provides `xray-tool-root` or `XRAY_TOOL_ROOT`, that location overrides the bundled tool. Both an `xray` directory and its parent repo root are accepted.
 - By default it writes into `<repo>/target/xray-forensic-report-<timestamp>/`.
