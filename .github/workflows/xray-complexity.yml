@@ -36,8 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSLO https://github.com/babashka/babashka/releases/download/v1.13.225/babashka-1.13.225-linux-amd64-static.tar.gz
-          curl -fsSLO https://github.com/babashka/babashka/releases/download/v1.13.225/babashka-1.13.225-linux-amd64-static.tar.gz.sha256
-          sha256sum -c babashka-1.13.225-linux-amd64-static.tar.gz.sha256
+          echo "ab0e98307405ba19e7c5ba0c3c7cd17a6f90aa90577a72709055f120796d6bfe  babashka-1.13.225-linux-amd64-static.tar.gz" | sha256sum -c -
           tar -xzf babashka-1.13.225-linux-amd64-static.tar.gz
           sudo install -m 0755 bb /usr/local/bin/bb
           bb --version
