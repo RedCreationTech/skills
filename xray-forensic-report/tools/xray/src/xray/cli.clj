@@ -109,13 +109,17 @@
         until-day (or until (->> commits (keep :date_day) sort last) "")
         staleness (metrics/staleness hotspots until-day)
         knowledge-loss (metrics/knowledge-loss hotspots ownership-long until-day)
-        ;; Compute complexity only for likely relevant Clojure files (top hotspots).
+        ;; Compute function-level complexity for supported source files among top hotspots.
         top-hotspot-paths (->> hotspots (take 200) (map :path) vec)
         complexity-functions (complexity/complexity-functions repo top-hotspot-paths)
         coupling-res (coupling/temporal-coupling commits hotspots cfg)
         risk (metrics/risk hotspots complexity-functions ownership-long cfg)
         risk-defaults (merge {:w-churn 0.45 :w-cc 0.35 :w-ownership 0.20}
                              (get-in cfg [:metrics :risk] {}))
+        complexity-defaults (merge {:w-cyclomatic 0.40
+                                    :w-cognitive 0.60
+                                    :cognitive-threshold 15}
+                                   (get-in cfg [:metrics :complexity] {}))
         coupling-defaults (merge {:min-cochange 3 :topK 25 :topN 100}
                                  (get-in cfg [:metrics :coupling] {}))
         raw-commits (when include-raw
@@ -133,7 +137,7 @@
                    (->> raw-commits (map :date_day) sort vec))
         raw-min-day (first raw-days)
         raw-max-day (last raw-days)]
-    {:schema_version "1.0"
+    {:schema_version "1.1"
      :repo {:root (str (fs/absolutize repo))
             :head (try (-> (p/sh {:dir repo} "git" "rev-parse" "HEAD") :out str/trim)
                        (catch Exception _ nil))}
@@ -145,6 +149,7 @@
               :path path
               :topN topN}
      :ui_defaults {:risk risk-defaults
+                   :complexity complexity-defaults
                    :coupling coupling-defaults}
      :report (:report cfg)
      :timeseries timeseries
