@@ -221,6 +221,20 @@
                                                        (long cognitive-threshold))
                                                    rows))]))
                                 (into {}))
+        ;; CogC is function-oriented. Avoid using raw file sum as the Risk
+        ;; input because many easy functions would look artificially risky.
+        ;; Pressure = hardest function + only the excess above the warning
+        ;; threshold across all functions.
+        cognitive-pressure-map
+        (->> complexity-by-path
+             (map (fn [[p rows]]
+                    (let [values (mapv #(long (or (:cognitive_complexity %) 0)) rows)
+                          mx (reduce max 0 values)
+                          excess (reduce + 0
+                                         (map #(max 0 (- % (long cognitive-threshold)))
+                                              values))]
+                      [p (+ mx excess)])))
+             (into {}))
         top1-map (->> ownership-long
                       (group-by :path)
                       (map (fn [[p rows]]
@@ -233,7 +247,7 @@
                             (+ (* 2.0 change_count) (* 0.001 churn_lines))))
                         paths)
         cc-raw (mapv (fn [p] (double (get cc-map p 0))) paths)
-        cognitive-raw (mapv (fn [p] (double (get cognitive-map p 0))) paths)
+        cognitive-raw (mapv (fn [p] (double (get cognitive-pressure-map p 0))) paths)
         owner-raw (mapv (fn [p]
                           (double (- 1.0
                                      (double (or (get top1-map p) 1.0)))))
@@ -262,6 +276,7 @@
                   :cognitive_sum (get cognitive-map p 0)
                   :cognitive_max (get cognitive-max-map p 0)
                   :cognitive_over_threshold (get cognitive-over-map p 0)
+                  :cognitive_pressure (get cognitive-pressure-map p 0)
                   :top1_pct (or (get top1-map p) 1.0)})
                paths churn-n cc-n cognitive-n complexity-n owner-n)
          (sort-by :risk_score >)
