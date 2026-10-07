@@ -14,6 +14,7 @@ from pathlib import Path
 
 try:
     import lizard
+    from lizard_ext.lizardcognitive import LizardExtension as CognitiveExtension
 except ImportError as exc:
     print(
         "[ERROR] Python package 'lizard' is required for JS/TS/Vue/Java/C# "
@@ -32,6 +33,8 @@ LANG_BY_SUFFIX = {
     ".java": "java",
     ".cs": "csharp",
 }
+
+ANALYZER = lizard.FileAnalyzer([CognitiveExtension()])
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,13 +91,16 @@ def function_row(rel_path: str, suffix: str, fn: object) -> dict[str, object]:
         "fn": str(name),
         "long_name": str(long_name),
         "cc": safe_int(getattr(fn, "cyclomatic_complexity", None), 1),
+        "cognitive_complexity": safe_int(
+            getattr(fn, "cognitive_complexity", None), 0
+        ),
         "nloc": safe_int(getattr(fn, "nloc", None), 0),
         "tokens": safe_int(getattr(fn, "token_count", None), 0),
         "params": safe_int(parameter_count, 0),
         "start_line": safe_int(getattr(fn, "start_line", None), 0),
         "end_line": safe_int(getattr(fn, "end_line", None), 0),
         "lang": LANG_BY_SUFFIX[suffix],
-        "analyzer": "lizard",
+        "analyzer": "lizard+cognitive",
     }
 
 
@@ -105,7 +111,7 @@ def analyze_file(repo: Path, raw_path: str) -> list[dict[str, object]]:
 
     rel_path, abs_path = normalized
     suffix = abs_path.suffix.lower()
-    result = lizard.analyze_file(str(abs_path))
+    result = ANALYZER(str(abs_path))
     rows = [function_row(rel_path, suffix, fn) for fn in result.function_list]
     rows.sort(
         key=lambda row: (
@@ -143,8 +149,8 @@ def main() -> None:
             )
 
     payload = {
-        "schema_version": "1.0",
-        "analyzer": "lizard",
+        "schema_version": "1.1",
+        "analyzer": "lizard+cognitive",
         "functions": rows,
         "errors": errors,
     }
