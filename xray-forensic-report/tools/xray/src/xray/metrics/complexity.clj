@@ -3,6 +3,7 @@
             [babashka.process :as p]
             [cheshire.core :as json]
             [clojure.string :as str]
+            [xray.metrics.cognitive :as cognitive]
             [rewrite-clj.node :as node]
             [rewrite-clj.parser :as parser]))
 
@@ -76,12 +77,17 @@
           (->> top
                (mapv (fn [n]
                        (let [nm (fn-name n)
-                             cc (+ 1 (node-cc n))]
+                             cc (+ 1 (node-cc n))
+                             form (try (node/sexpr n) (catch Exception _ nil))
+                             cogc (if (and nm (seq? form))
+                                    (cognitive/complexity form nm)
+                                    0)]
                          (when nm
                            {:path path
                             :fn nm
                             :long_name nm
                             :cc cc
+                            :cognitive_complexity cogc
                             :nloc nil
                             :tokens nil
                             :params nil
@@ -176,7 +182,8 @@
    - .cs (C#)
 
    Rows preserve the original :path/:fn/:cc/:lang contract and add
-   :long_name, :nloc, :tokens, :params, :start_line, :end_line, :analyzer
+   :cognitive_complexity, :long_name, :nloc, :tokens, :params,
+   :start_line, :end_line, :analyzer
    when the backend can provide them."
   [repo paths]
   (let [paths (->> paths distinct vec)
