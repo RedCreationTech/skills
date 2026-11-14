@@ -1,0 +1,20 @@
+# Local credentials and generated or private media
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+private/
+recordings/
+output/
+*.mp4
+*.webm
+*.wav
+*.mp3
+*.m4a
+*.srt
+__pycache__/
+*.py[cod]
+.DS_Store

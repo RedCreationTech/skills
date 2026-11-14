@@ -1,6 +1,6 @@
 # redcreation/skills
 
-A collection of agent skills for AI coding assistants, covering video publishing, content pipelines, test evidence, and code forensics.
+A collection of agent skills for AI coding assistants, covering video publishing, evidence video, content pipelines, test evidence, and code forensics.
 
 ## Installation
 
@@ -12,6 +12,9 @@ npx skills@latest add redcreation/skills --skill bilibili-uploader
 
 # Movie commentary pipeline: subtitles → script → TTS → rendered video
 npx skills@latest add redcreation/skills --skill movie-commentary-video-pipeline
+
+# Evidence video: real screen recording with outline, subtitles, narration
+npx skills@latest add redcreation/skills --skill agent-evidence-video
 
 # Test evidence: assertion-driven test videos, bug reproductions, reports
 npx skills@latest add redcreation/skills --skill test-evidence
@@ -26,6 +29,40 @@ npx skills@latest add redcreation/skills --skill frontend-to-fullstack
 ---
 
 ## Skills
+
+### agent-evidence-video
+
+**What it does**
+
+Turns real software changes into verifiable demonstration videos: a persistent chapter outline on the left, actual screen recording on the right, visible pointer/input hints, synchronized Chinese subtitles and per-line narration. It emphasizes assertion-backed scenes and refuses to present mocked responses or edited-together success as real behavior.
+
+**Deliverables**
+
+- A chaptered MP4 with outline, subtitles, narration and embedded chapters.
+- `subtitles.srt` and `chapters.ffmeta` sidecars.
+- Raw chapter recordings retained separately from the composed output.
+
+**Scripts**
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/interaction.js` | Optional Playwright pointer and input-hint overlay |
+| `scripts/mimo_tts.py` | Per-line MiMo TTS authenticated only through `MIMO_API_KEY` |
+| `scripts/compose.py` | Composes captures, narration, outline, captions, SRT and chapters |
+
+**Use this skill when you want to**
+
+- Demonstrate a bug fix, new feature or end-to-end flow with real on-screen actions.
+- Produce a reviewable evidence video rather than a promotional or fictional clip.
+- Add Chinese subtitles and narration to an existing operation recording.
+
+**Prerequisites**
+
+- Python 3, Pillow, a CJK font and ffmpeg/ffprobe.
+- Playwright only when the optional interaction overlay is used.
+- `MIMO_API_KEY` only when MiMo narration is requested; never commit it.
+
+---
 
 ### test-evidence
 
