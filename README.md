@@ -1,6 +1,6 @@
 # redcreation/skills
 
-A collection of agent skills for AI coding assistants, covering video publishing, content pipelines, and code forensics.
+A collection of agent skills for AI coding assistants, covering video publishing, content pipelines, test evidence, and code forensics.
 
 ## Installation
 
@@ -13,6 +13,9 @@ npx skills@latest add redcreation/skills --skill bilibili-uploader
 # Movie commentary pipeline: subtitles → script → TTS → rendered video
 npx skills@latest add redcreation/skills --skill movie-commentary-video-pipeline
 
+# Test evidence: assertion-driven test videos, bug reproductions, reports
+npx skills@latest add redcreation/skills --skill test-evidence
+
 # Git repository forensic report generator
 npx skills@latest add redcreation/skills --skill xray-forensic-report
 
@@ -23,6 +26,45 @@ npx skills@latest add redcreation/skills --skill frontend-to-fullstack
 ---
 
 ## Skills
+
+### test-evidence
+
+**What it does**
+
+Turns a real test run into an auditable evidence chain: case → step → assertion → evidence timestamp → defect → report conclusion. It is opinionated about not overstating results: unexecuted is not passed, failures are never edited out, and every report number must reconcile with the evidence.
+
+**Deliverables**
+
+- A chaptered test-run video with a persistent verdict sidebar, raw screen recording, subtitles and per-line narration.
+- An annotated bug-reproduction video with the shortest repro path, expected vs. actual, red boxes and numbered callouts.
+- A bug list keyed to case IDs, and a test report filled from the project template.
+- `test-run.json` with steps, assertions, timestamps, screenshots, console errors and failed requests.
+
+**Scripts**
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/interaction.js` | Playwright pointer, click ripple and input hint overlay; sensitive fields hidden by default |
+| `scripts/evidence.js` | Records steps, assertions, screenshots, timestamps and console/network errors into `test-evidence/1` JSON |
+| `scripts/annotate.py` | Adds a header band, red boxes and numbered callouts to a bug recording |
+| `scripts/compose.py` | Composes 1920×1080 H.264/AAC video with verdict sidebar, captions, narration, SRT, chapters and a verdict summary |
+| `scripts/mimo_tts.py` | Per-line MiMo TTS; reads `MIMO_API_KEY` from the environment only |
+| `scripts/verify.py` | Checks resolution, codecs, chapters, full decode, SRT boundaries, manifest timing and evidence/report consistency |
+
+**Use this skill when you want to**
+
+- Run a test case set end to end and produce reviewable evidence rather than a highlight reel.
+- Reproduce and annotate a defect for a bug report or developer handoff.
+- Fill a project test report whose numbers are traceable to assertions and recorded evidence.
+- Add Chinese subtitles and narration to test-run or bug videos.
+
+**Prerequisites**
+
+- Python 3, Pillow, ffmpeg/ffprobe and a CJK font.
+- Playwright only for the optional capture helpers.
+- `MIMO_API_KEY` only when MiMo narration is requested; never commit it.
+
+---
 
 ### frontend-to-fullstack
 

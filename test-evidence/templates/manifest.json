@@ -1,0 +1,49 @@
+{
+  "title": "文件借阅 · 测试证据",
+  "subtitle": "构建 2026-11-13 · 测试环境 · 操作人 qa",
+  "scenes": [
+    {
+      "id": "CASE-01",
+      "title": "发起借阅申请",
+      "verdict": "pass",
+      "capture": "raw/01-apply.webm",
+      "lines": [
+        {"text": "使用测试账号登录，进入文件借阅台账。", "audio": "audio/01-01.wav", "start": 1.0},
+        {"text": "填写借阅类型与截止日期，提交后出现成功提示。", "audio": "audio/01-02.wav", "start": 8.5},
+        {"text": "重新打开台账，新记录已生成。", "audio": "audio/01-03.wav", "start": 18.0}
+      ]
+    },
+    {
+      "id": "CASE-04",
+      "title": "删除清单文件",
+      "verdict": "fail",
+      "defect": "BUG-01",
+      "capture": "raw/04-delete.webm",
+      "lines": [
+        {"text": "勾选文件后点击删除，文件立即消失并提示成功。", "audio": "audio/04-01.wav", "start": 2.0},
+        {"text": "全程没有出现电子签名弹窗，实际结果与预期不符。", "audio": "audio/04-02.wav", "start": 9.0}
+      ]
+    },
+    {
+      "id": "CASE-07",
+      "title": "跨部门借阅",
+      "verdict": "blocked",
+      "reason": "测试环境缺少跨部门审批人账号",
+      "capture": "raw/07-cross-dept.webm",
+      "lines": [
+        {"text": "进入跨部门借阅入口，审批人列表为空。", "audio": "audio/07-01.wav", "start": 1.0},
+        {"text": "没有可用审批人，本用例阻塞，待补充账号后重测。", "audio": "audio/07-02.wav", "start": 7.0}
+      ]
+    },
+    {
+      "id": "CASE-09",
+      "title": "借阅到期提醒",
+      "verdict": "unexecuted",
+      "reason": "需要等待到期时间，本轮未执行",
+      "capture": "raw/09-expiry.webm",
+      "lines": [
+        {"text": "到期提醒依赖次日定时任务，本轮未执行。", "audio": "audio/09-01.wav", "start": 1.0}
+      ]
+    }
+  ]
+}

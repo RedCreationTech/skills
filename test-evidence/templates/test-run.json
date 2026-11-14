@@ -1,0 +1,57 @@
+{
+  "schema": "test-evidence/1",
+  "startedAt": "2026-11-13T10:00:00.000Z",
+  "finishedAt": "2026-11-13T10:12:00.000Z",
+  "durationMs": 720000,
+  "meta": {
+    "caseSet": "文件借阅",
+    "env": "test",
+    "version": "2026-11-13",
+    "operator": "qa",
+    "instance": "demo-001"
+  },
+  "summary": {
+    "pass": 1,
+    "fail": 1,
+    "total": 2,
+    "steps": 2,
+    "consoleErrors": 0,
+    "failedRequests": 0
+  },
+  "steps": [
+    {"id": "CASE-01.1", "caseId": "CASE-01", "name": "登录并进入借阅台账", "startMs": 0, "endMs": 8200, "status": "done", "error": null},
+    {"id": "CASE-04.1", "caseId": "CASE-04", "name": "打开发起申请并加入文件", "startMs": 90000, "endMs": 151000, "status": "done", "error": null}
+  ],
+  "assertions": [
+    {
+      "id": "CASE-01-a1",
+      "caseId": "CASE-01",
+      "name": "提交后出现成功提示",
+      "verdict": "pass",
+      "expected": "提示发起成功",
+      "defect": null,
+      "startMs": 22000,
+      "endMs": 23600,
+      "error": null,
+      "screenshot": null
+    },
+    {
+      "id": "CASE-04-a1",
+      "caseId": "CASE-04",
+      "name": "删除文件前要求电子签名",
+      "verdict": "fail",
+      "expected": "弹出电子签名窗口",
+      "defect": "BUG-01",
+      "startMs": 168000,
+      "endMs": 169800,
+      "error": "Timed out waiting for the signature dialog",
+      "screenshot": "shots/169800-fail-CASE-04-a1.png"
+    }
+  ],
+  "console": [],
+  "failedRequests": [],
+  "marks": [
+    {"label": "delete-click", "ms": 167500},
+    {"label": "audit-sign-tab", "ms": 690000}
+  ]
+}
