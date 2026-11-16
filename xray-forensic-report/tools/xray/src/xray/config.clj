@@ -26,9 +26,16 @@
              :globs  []
              :commits #{}}
    :classify {:doc-ext #{".md" ".org"}
-              :code-ext #{".clj" ".cljs" ".cljc" ".js" ".ts"}}
+              :code-ext #{".clj" ".cljs" ".cljc"
+                          ".js" ".jsx" ".ts" ".tsx" ".vue"
+                          ".java" ".cs"}}
    :metrics {:coupling {:min-cochange 3 :topN 100}
              :hotspots {:topN 200}
+             :complexity {:w-cyclomatic 0.40
+                          :w-cognitive 0.60
+                          :cognitive-threshold 15}
+             ;; :w-cc is retained for backward compatibility. It now weights
+             ;; the blended complexity score, not cyclomatic complexity alone.
              :risk {:w-churn 0.45 :w-cc 0.35 :w-ownership 0.20}}
    :report {:title "XRay Report"
             :theme "light"}})

@@ -16,6 +16,7 @@ Primary fields consumed:
 - `ownership_long[]`
 - `staleness[]`
 - `knowledge_loss[]`
+- `complexity_functions[]`
 - `raw.commits[]`
 - `raw.authors[]`
 
@@ -24,3 +25,51 @@ Optional behavior:
 - If `raw` is missing, author and commit-level sections degrade gracefully.
 - If `knowledge_loss` is empty, the corresponding report section falls back to a note.
 - If `complexity` is sparse, risk tables still render from the available data.
+
+
+## complexity_functions[]
+
+Function-level rows preserve the original XRay fields and may include richer metrics:
+
+- `path`: repo-relative source path
+- `fn`: function or method name
+- `long_name`: backend-provided signature/display name when available
+- `cc`: cyclomatic complexity / CCN
+- `cognitive_complexity`: function-level Cognitive Complexity / CogC
+- `nloc`: non-comment source lines when available
+- `tokens`: function token count when available
+- `params`: parameter count when available
+- `start_line`, `end_line`: source range when available
+- `lang`: `clojure`, `javascript`, `typescript`, `vue`, `java`, or `csharp`
+- `analyzer`: analyzer backend, currently `rewrite-clj` or `lizard+cognitive`
+
+React code is analyzed through JavaScript/JSX or TypeScript/TSX. Vue single-file
+components are analyzed through the VueJS parser in Lizard.
+
+
+## Cognitive Complexity policy
+
+The default function threshold is 15.
+
+For JavaScript/JSX, TypeScript/TSX, Vue, Java and C#, XRay uses Lizard's
+SonarSource-compatible cognitive extension.
+
+For Clojure/CLJS/CLJC, XRay uses a Lisp-aware AST implementation:
+
+- `if`, `when`, binding conditionals, loops and `catch` break linear flow and pay nesting cost.
+- `cond` is treated like an if/else-if chain.
+- `case` and `condp` are switch-like and count once structurally.
+- one `and` or `or` sequence counts once; changing/nesting the logical operator adds another sequence.
+- nested `fn` bodies add a nesting level without an increment for the lambda itself.
+- direct self-recursion or function-level `recur` adds one point.
+- `let`, `binding`, threading macros and ordinary higher-order function calls do not add complexity by themselves.
+
+Risk keeps the existing top-level weights. The complexity component defaults to
+40% normalized cyclomatic complexity and 60% normalized cognitive complexity.
+
+
+For file-level Risk, XRay does not use raw `cognitive_sum` directly. It derives
+`cognitive_pressure = cognitive_max + sum(max(0, function_cogc - threshold))`.
+This prevents a large file containing many simple functions from being penalized
+merely for its size, while still increasing pressure when several functions exceed
+the default CogC threshold of 15.

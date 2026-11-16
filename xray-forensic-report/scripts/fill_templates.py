@@ -311,12 +311,17 @@ def build_risk_table(data: dict, limit: int = 10) -> str:
                 code(item.get("path")),
                 fmt_float(float(item.get("risk_score", 0.0) or 0.0)),
                 fmt_int(item.get("cc_sum")),
+                fmt_int(item.get("cognitive_sum")),
+                fmt_int(item.get("cognitive_max")),
                 fmt_int(item.get("change_count")),
                 fmt_int(item.get("churn_lines")),
                 fmt_pct(float(item.get("top1_pct", 0.0) or 0.0)),
             ]
         )
-    return markdown_table(["文件", "风险分数", "复杂度", "变更次数", "Churn", "Top1 占比"], rows)
+    return markdown_table(
+        ["文件", "风险分数", "CC 总和", "CogC 总和", "最高 CogC", "变更次数", "Churn", "Top1 占比"],
+        rows,
+    )
 
 
 def build_directory_table(data: dict, limit: int = 10) -> str:
@@ -592,7 +597,11 @@ def build_technical_goals(data: dict) -> str:
 
 def risk_action(item: dict) -> str:
     cc_sum = int(item.get("cc_sum", 0) or 0)
+    cognitive_max = int(item.get("cognitive_max", 0) or 0)
+    cognitive_over = int(item.get("cognitive_over_threshold", 0) or 0)
     top1_pct = float(item.get("top1_pct", 0.0) or 0.0)
+    if cognitive_over > 0 or cognitive_max > 15:
+        return "优先拆解高认知复杂度函数，降低嵌套并提取可命名步骤"
     if cc_sum >= 40:
         return "拆职责并补单元测试"
     if top1_pct >= 0.75:
@@ -606,8 +615,9 @@ def build_technical_tasks(data: dict) -> str:
         priority = "P0" if index <= 2 else "P1"
         lines.append(
             f"### {priority}-T{index}: {code(item.get('path'))}\n"
-            f"- 证据：风险分数 {fmt_float(float(item.get('risk_score', 0.0) or 0.0))}，复杂度 {fmt_int(item.get('cc_sum'))}，"
-            f"变更次数 {fmt_int(item.get('change_count'))}。\n"
+            f"- 证据：风险分数 {fmt_float(float(item.get('risk_score', 0.0) or 0.0))}，"
+            f"CC 总和 {fmt_int(item.get('cc_sum'))}，CogC 总和 {fmt_int(item.get('cognitive_sum'))}，"
+            f"最高函数 CogC {fmt_int(item.get('cognitive_max'))}，变更次数 {fmt_int(item.get('change_count'))}。\n"
             f"- 建议动作：{risk_action(item)}。\n"
             f"- 最低验收：关键路径补测试，发布前有人做二次 review。"
         )
@@ -714,7 +724,7 @@ def build_method_notes() -> str:
     return markdown_bullets(
         [
             "热点来自时间窗口内文件变更频次与 churn 聚合。",
-            "风险分数综合考虑 churn、复杂度和 ownership 分散度。",
+            "风险分数综合考虑 churn、复杂度和 ownership 分散度，其中复杂度默认由 40% Cyclomatic Complexity + 60% Cognitive Complexity 构成。",
             "时间耦合的支持度口径为 `co_change_count / min(change_count[a], change_count[b])`。",
             "陈旧度与知识流失都相对于报告截止日期计算。",
         ]

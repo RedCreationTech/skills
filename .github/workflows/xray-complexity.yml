@@ -1,0 +1,129 @@
+name: XRay complexity
+
+on:
+  pull_request:
+    paths:
+      - "xray-forensic-report/**"
+      - ".github/workflows/xray-complexity.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "xray-forensic-report/**"
+      - ".github/workflows/xray-complexity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  complexity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned Lizard
+        run: python -m pip install -r xray-forensic-report/requirements.txt
+
+      - name: Install pinned Babashka
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSLO https://github.com/babashka/babashka/releases/download/v1.13.225/babashka-1.13.225-linux-amd64-static.tar.gz
+          echo "ab0e98307405ba19e7c5ba0c3c7cd17a6f90aa90577a72709055f120796d6bfe  babashka-1.13.225-linux-amd64-static.tar.gz" | sha256sum -c -
+          tar -xzf babashka-1.13.225-linux-amd64-static.tar.gz
+          sudo install -m 0755 bb /usr/local/bin/bb
+          bb --version
+
+      - name: Compile Python helpers
+        run: |
+          python -m py_compile             xray-forensic-report/scripts/run_forensic_pipeline.py             xray-forensic-report/scripts/fill_templates.py             xray-forensic-report/tools/xray/scripts/complexity_lizard.py             xray-forensic-report/tests/test_complexity_lizard.py
+
+      - name: Run Lizard language smoke tests
+        run: python xray-forensic-report/tests/test_complexity_lizard.py
+
+      - name: Run Clojure cognitive and bridge tests
+        shell: bash
+        run: |
+          bb -cp "xray-forensic-report/tools/xray/src:xray-forensic-report/tools/xray/test" -e "
+          (require '[clojure.test :as t])
+          (require 'xray.metrics.cognitive-test)
+          (require 'xray.metrics.complexity-integration-test)
+          (let [r (t/run-tests 'xray.metrics.cognitive-test
+                               'xray.metrics.complexity-integration-test)]
+            (when (pos? (+ (:fail r) (:error r)))
+              (System/exit 1)))"
+
+      - name: Run forensic pipeline end to end
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/xray-fixture"
+          rm -rf "$fixture"
+          mkdir -p "$fixture"
+          git -C "$fixture" init
+          git -C "$fixture" config user.email "xray-ci@example.invalid"
+          git -C "$fixture" config user.name "XRay CI"
+          mkdir -p "$fixture/src"
+          cat > "$fixture/src/core.clj" <<'EOF'
+          (ns demo.core)
+          (defn decide [a b]
+            (when a
+              (when b
+                :ok)))
+          EOF
+          cat > "$fixture/src/App.tsx" <<'EOF'
+          type Props = { ok: boolean };
+          export function App(props: Props) {
+            if (props.ok) {
+              return <div>yes</div>;
+            }
+            return <span>no</span>;
+          }
+          EOF
+          git -C "$fixture" add .
+          git -C "$fixture" commit -m "initial fixture"
+
+          python xray-forensic-report/scripts/run_forensic_pipeline.py             "$fixture"             --out "$fixture/xray-out"             --include-raw true
+
+          FIXTURE="$fixture" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["FIXTURE"])
+          out = root / "xray-out"
+          data = json.loads((out / "data.json").read_text(encoding="utf-8"))
+
+          rows = data.get("complexity_functions", [])
+          assert any(r.get("lang") == "clojure" and r.get("cognitive_complexity", 0) > 0 for r in rows), rows
+          assert any(r.get("lang") == "typescript" and r.get("cognitive_complexity", 0) > 0 for r in rows), rows
+          assert data.get("risk"), data
+          assert any("cognitive_pressure" in r for r in data["risk"]), data["risk"]
+          assert (out / "index.html").is_file()
+          assert (out / "data.json").is_file()
+          assert (out / "meta.json").is_file()
+          for name in (
+              "report-forensic-analysis.md",
+              "report-management-summary.md",
+              "report-technical-plan.md",
+              "report-refactoring-guide.md",
+          ):
+              assert (out / "reports" / name).is_file(), name
+          PY
+
+      - name: Upload forensic test artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xray-forensic-test-results
+          path: ${{ runner.temp }}/xray-fixture/xray-out/
+          if-no-files-found: error
+          retention-days: 14
